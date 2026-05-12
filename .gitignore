@@ -1,0 +1,7 @@
+node_modules
+dist
+.env
+migration-tasks.json
+migration-report.json
+/envs
+/results
