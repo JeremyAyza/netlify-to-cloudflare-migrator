@@ -92,6 +92,10 @@ export async function runMigration(dataPath: string) {
     tasks = validatedSites.map((site) => ({
       config: adaptNetlifyToCloudflare(site),
       status: "pending" as const,
+      netlifyUrl: site.url || undefined,
+      netlifyCustomDomain: site.custom_domain,
+      netlifyDomainAliases: site.domain_aliases || [],
+      netlifyDefaultDomain: site.default_domain || undefined,
     }));
 
     saveTasks(tasks);
