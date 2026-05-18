@@ -6,10 +6,10 @@ import {
   unlinkSync,
 } from "fs"
 import chalk from "chalk"
-import { CloudflareProjectConfig } from "./adapter"
+import { NormalizedProjectConfig } from "./adapter"
 
 export interface MigrationTask {
-  config: CloudflareProjectConfig
+  config: NormalizedProjectConfig
   status: "pending" | "success" | "failed"
   error?: string
   url?: string

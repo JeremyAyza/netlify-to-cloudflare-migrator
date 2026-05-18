@@ -2,27 +2,17 @@ import { readFileSync, existsSync } from "fs";
 import chalk from "chalk";
 import ora from "ora";
 import { netlifyDataSchema } from "./schema";
-import { adaptNetlifyToCloudflare } from "./adapter";
+import { normalizeNetlifySite } from "./adapter";
 import { loadExistingTasks, saveTasks, archiveTasks, MigrationTask } from "./taskManager";
 import { fetchNetlifySites, fetchNetlifyEnvVars } from "./netlify";
-import { checkProjectExists, createCloudflareProject } from "./cloudflare";
+import { MigrationProvider } from "./providers";
+import { parseEnvFile } from "./utils";
 
 /**
  * Bucle principal de ejecución de la migración
  * @param dataPath Ruta al JSON de entrada (fallback)
  */
-export async function runMigration(dataPath: string) {
-  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-  const apiToken = process.env.CLOUDFLARE_API_TOKEN;
-
-  if (!accountId || !apiToken) {
-    console.error(
-      chalk.red(
-        "Error: Las variables CLOUDFLARE_ACCOUNT_ID y CLOUDFLARE_API_TOKEN deben estar configuradas.",
-      ),
-    );
-    process.exit(1);
-  }
+export async function runMigration(dataPath: string, provider: MigrationProvider) {
 
   let tasks: MigrationTask[] = [];
   const existingTasks = loadExistingTasks();
@@ -90,7 +80,7 @@ export async function runMigration(dataPath: string) {
 
     const validatedSites = parseResult.data;
     tasks = validatedSites.map((site) => ({
-      config: adaptNetlifyToCloudflare(site),
+      config: normalizeNetlifySite(site),
       status: "pending" as const,
       netlifyUrl: site.url || undefined,
       netlifyCustomDomain: site.custom_domain,
@@ -117,19 +107,15 @@ export async function runMigration(dataPath: string) {
 
     const siteSpinner = ora(`Procesando: ${task.config.projectName}`).start();
     try {
-      siteSpinner.text = `Verificando si ${task.config.projectName} ya existe en Cloudflare...`;
-      const exists = await checkProjectExists(
-        task.config.projectName,
-        accountId,
-        apiToken,
-      );
+      siteSpinner.text = `Verificando si ${task.config.projectName} ya existe en ${provider.name}...`;
+      const exists = await provider.checkProjectExists(task.config.projectName);
 
       if (exists) {
         siteSpinner.warn(
           `El proyecto ${task.config.projectName} ya existe. Omitiendo creación.`,
         );
         task.status = "success";
-        task.url = `${task.config.projectName}.pages.dev`;
+        task.url = provider.name === "cloudflare" ? `${task.config.projectName}.pages.dev` : `${task.config.projectName}.onrender.com`;
       } else {
         let netlifyEnvVars: Record<string, string> = {};
         const netlifyToken = process.env.NETLIFY_API_TOKEN;
@@ -153,19 +139,29 @@ export async function runMigration(dataPath: string) {
           }
         }
 
-        // Crear proyecto en Cloudflare
-        siteSpinner.text = `Creando proyecto ${task.config.projectName} en Cloudflare...`;
-        await createCloudflareProject(
-          task.config,
-          accountId,
-          apiToken,
-          netlifyEnvVars,
-        );
+        // Buscar variables locales
+        const envFilePath = `envs/${task.config.projectName}.txt`;
+        let fileEnvVars: Record<string, string> = {};
+        if (existsSync(envFilePath)) {
+          try {
+            fileEnvVars = parseEnvFile(envFilePath);
+          } catch (err: any) {
+            console.warn(
+              chalk.yellow(`\nNo se pudo leer el archivo de env en ${envFilePath}: ${err.message}`)
+            );
+          }
+        }
+
+        const combinedEnvVars = { ...netlifyEnvVars, ...fileEnvVars };
+
+        // Crear proyecto en proveedor destino
+        siteSpinner.text = `Creando proyecto ${task.config.projectName} en ${provider.name}...`;
+        const result = await provider.createProject(task.config, combinedEnvVars);
 
         task.status = "success";
-        task.url = `${task.config.projectName}.pages.dev`;
+        task.url = result.url;
         siteSpinner.succeed(
-          `Proyecto ${task.config.projectName} migrado con éxito.`,
+          `Proyecto ${task.config.projectName} migrado con éxito a ${provider.name}.`,
         );
       }
     } catch (error: any) {

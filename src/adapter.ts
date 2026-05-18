@@ -1,6 +1,6 @@
 import { NetlifySite } from "./schema";
 
-export interface CloudflareProjectConfig {
+export interface NormalizedProjectConfig {
   projectName: string;
   productionBranch: string;
   buildCommand: string | null;
@@ -11,9 +11,9 @@ export interface CloudflareProjectConfig {
   netlifySiteId: string | null;
 }
 
-export function adaptNetlifyToCloudflare(
+export function normalizeNetlifySite(
   site: NetlifySite,
-): CloudflareProjectConfig {
+): NormalizedProjectConfig {
   let repoOwner: string | null = null;
   let repoName: string | null = null;
 
