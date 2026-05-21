@@ -5,3 +5,5 @@ migration-tasks.json
 migration-report.json
 /envs
 /results
+/results_disable_builds
+projects.txt

@@ -49,3 +49,25 @@ export async function fetchNetlifyEnvVars(netlifyToken: string, siteId: string):
 
   return envVars;
 }
+
+/**
+ * Desactiva los despliegues (builds) automáticos de un sitio en Netlify
+ */
+export async function disableNetlifyBuild(netlifyToken: string, siteId: string): Promise<void> {
+  const response = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${netlifyToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      build_settings: {
+        stop_builds: true,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error al detener builds en Netlify: ${response.statusText}`);
+  }
+}
