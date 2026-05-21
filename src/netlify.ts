@@ -21,9 +21,9 @@ export async function fetchNetlifySites(netlifyToken: string, targetNames: strin
 /**
  * Consulta las variables de entorno de producción para un sitio específico en Netlify
  */
-export async function fetchNetlifyEnvVars(netlifyToken: string, siteId: string): Promise<Record<string, string>> {
+export async function fetchNetlifyEnvVars(netlifyToken: string, siteId: string): Promise<{ production: Record<string, string>; preview: Record<string, string> }> {
   const envResponse = await fetch(
-    `https://api.netlify.com/api/v1/sites/${siteId}/env?context_name=production`,
+    `https://api.netlify.com/api/v1/sites/${siteId}/env`,
     {
       headers: {
         Authorization: `Bearer ${netlifyToken}`,
@@ -31,7 +31,7 @@ export async function fetchNetlifyEnvVars(netlifyToken: string, siteId: string):
     },
   );
 
-  const envVars: Record<string, string> = {};
+  const envVars = { production: {} as Record<string, string>, preview: {} as Record<string, string> };
 
   if (envResponse.ok) {
     const envData = await envResponse.json();
@@ -40,7 +40,14 @@ export async function fetchNetlifyEnvVars(netlifyToken: string, siteId: string):
         (v: any) => v.context === "production" || v.context === "all",
       );
       if (prodValue) {
-        envVars[item.key] = prodValue.value;
+        envVars.production[item.key] = prodValue.value;
+      }
+
+      const previewValue = item.values.find(
+        (v: any) => v.context === "deploy-preview" || v.context === "branch-deploy" || v.context === "all",
+      );
+      if (previewValue) {
+        envVars.preview[item.key] = previewValue.value;
       }
     }
   } else {

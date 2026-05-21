@@ -37,7 +37,7 @@ export class RenderProvider implements MigrationProvider {
 
   async createProject(
     config: NormalizedProjectConfig,
-    envVars: Record<string, string>
+    envVars: { production: Record<string, string>; preview: Record<string, string> }
   ): Promise<{ success: boolean; url?: string }> {
     if (!config.repoOwner || !config.repoName) {
       throw new Error(`Para migrar a Render es necesario que el proyecto tenga un repositorio configurado.`);
@@ -91,8 +91,8 @@ export class RenderProvider implements MigrationProvider {
       },
     };
 
-    if (Object.keys(envVars).length > 0) {
-      payload.envVars = Object.entries(envVars).map(([key, value]) => ({
+    if (Object.keys(envVars.production).length > 0) {
+      payload.envVars = Object.entries(envVars.production).map(([key, value]) => ({
         key,
         value,
       }));

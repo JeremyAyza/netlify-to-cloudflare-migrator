@@ -17,6 +17,6 @@ export interface MigrationProvider {
    */
   createProject(
     config: NormalizedProjectConfig,
-    envVars: Record<string, string>
+    envVars: { production: Record<string, string>; preview: Record<string, string> }
   ): Promise<{ success: boolean; url?: string }>;
 }

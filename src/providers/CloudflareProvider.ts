@@ -30,7 +30,7 @@ export class CloudflareProvider implements MigrationProvider {
 
   async createProject(
     config: NormalizedProjectConfig,
-    envVars: Record<string, string>
+    envVars: { production: Record<string, string>; preview: Record<string, string> }
   ): Promise<{ success: boolean; url?: string }> {
     const payload: any = {
       name: config.projectName,
@@ -42,20 +42,26 @@ export class CloudflareProvider implements MigrationProvider {
       },
     };
 
-    if (Object.keys(envVars).length > 0) {
-      const formattedEnvVars: Record<string, { value: string }> = {};
-      for (const [key, value] of Object.entries(envVars)) {
-        formattedEnvVars[key] = { value };
+    const hasProductionVars = Object.keys(envVars.production).length > 0;
+    const hasPreviewVars = Object.keys(envVars.preview).length > 0;
+
+    if (hasProductionVars || hasPreviewVars) {
+      payload.deployment_configs = {
+        production: { env_vars: {} },
+        preview: { env_vars: {} },
+      };
+
+      if (hasProductionVars) {
+        for (const [key, value] of Object.entries(envVars.production)) {
+          payload.deployment_configs.production.env_vars[key] = { value };
+        }
       }
 
-      payload.deployment_configs = {
-        production: {
-          env_vars: formattedEnvVars,
-        },
-        preview: {
-          env_vars: formattedEnvVars,
-        },
-      };
+      if (hasPreviewVars) {
+        for (const [key, value] of Object.entries(envVars.preview)) {
+          payload.deployment_configs.preview.env_vars[key] = { value };
+        }
+      }
     }
 
     if (config.repoOwner && config.repoName) {

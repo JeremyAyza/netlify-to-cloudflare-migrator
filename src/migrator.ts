@@ -117,7 +117,7 @@ export async function runMigration(dataPath: string, provider: MigrationProvider
         task.status = "success";
         task.url = provider.name === "cloudflare" ? `${task.config.projectName}.pages.dev` : `${task.config.projectName}.onrender.com`;
       } else {
-        let netlifyEnvVars: Record<string, string> = {};
+        let netlifyEnvVars: { production: Record<string, string>; preview: Record<string, string> } = { production: {}, preview: {} };
         const netlifyToken = process.env.NETLIFY_API_TOKEN;
 
         // Consultar variables en Netlify si aplica
@@ -127,7 +127,7 @@ export async function runMigration(dataPath: string, provider: MigrationProvider
             netlifyEnvVars = await fetchNetlifyEnvVars(netlifyToken, task.config.netlifySiteId);
             console.log(
               chalk.cyan(
-                `\n[Netlify] Cargadas ${Object.keys(netlifyEnvVars).length} variables desde API para ${task.config.projectName}`,
+                `\n[Netlify] Cargadas ${Object.keys(netlifyEnvVars.production).length} variables de producción y ${Object.keys(netlifyEnvVars.preview).length} variables de preview para ${task.config.projectName}`,
               ),
             );
           } catch (err: any) {
@@ -152,11 +152,17 @@ export async function runMigration(dataPath: string, provider: MigrationProvider
           }
         }
 
-        const combinedEnvVars = { ...netlifyEnvVars, ...fileEnvVars };
+        const combinedEnvVars = {
+          production: { ...netlifyEnvVars.production, ...fileEnvVars },
+          preview: { ...netlifyEnvVars.preview, ...fileEnvVars },
+        };
 
-        // Crear proyecto en proveedor destino
         siteSpinner.text = `Creando proyecto ${task.config.projectName} en ${provider.name}...`;
-        const result = await provider.createProject(task.config, combinedEnvVars);
+
+        const result = await provider.createProject(
+          task.config,
+          combinedEnvVars,
+        );
 
         task.status = "success";
         task.url = result.url;
