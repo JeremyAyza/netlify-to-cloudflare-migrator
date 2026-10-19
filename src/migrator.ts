@@ -35,7 +35,7 @@ export async function runMigration(dataPath: string, provider: MigrationProvider
         const targetNames = filterContent
           .split("\n")
           .map((s) => s.trim())
-          .filter(Boolean);
+          .filter((s) => s.length > 0 && !s.startsWith("#"));
 
         spinner.text = "Consultando sitios en la API de Netlify...";
         sites = await fetchNetlifySites(netlifyToken, targetNames);

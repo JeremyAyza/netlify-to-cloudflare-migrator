@@ -1,20 +1,33 @@
 import chalk from "chalk";
 
+const NETLIFY_PAGE_SIZE = 100;
+
 /**
- * Consulta la lista de sitios en Netlify y los filtra por los nombres solicitados
+ * Consulta la lista de sitios en Netlify (todas las páginas) y los filtra por los nombres solicitados
  */
 export async function fetchNetlifySites(netlifyToken: string, targetNames: string[]): Promise<any[]> {
-  const response = await fetch("https://api.netlify.com/api/v1/sites", {
-    headers: {
-      Authorization: `Bearer ${netlifyToken}`,
-    },
-  });
+  const allSites: any[] = [];
 
-  if (!response.ok) {
-    throw new Error(`Error en API de Netlify: ${response.statusText}`);
+  for (let page = 1; ; page++) {
+    const response = await fetch(
+      `https://api.netlify.com/api/v1/sites?page=${page}&per_page=${NETLIFY_PAGE_SIZE}`,
+      {
+        headers: {
+          Authorization: `Bearer ${netlifyToken}`,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`Error en API de Netlify: ${response.statusText}`);
+    }
+
+    const pageSites = await response.json();
+    allSites.push(...pageSites);
+
+    if (pageSites.length < NETLIFY_PAGE_SIZE) break;
   }
 
-  const allSites = await response.json();
   return allSites.filter((site: any) => targetNames.includes(site.name));
 }
 
