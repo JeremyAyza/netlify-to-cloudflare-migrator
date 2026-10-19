@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "migrate": "tsx src/index.ts",
-    "disable-builds": "tsx src/disable-builds.ts"
+    "disable-builds": "tsx src/disable-builds.ts",
+    "cf": "tsx src/cloudflare-projects.ts"
   },
   "dependencies": {
     "chalk": "^5.3.0",
