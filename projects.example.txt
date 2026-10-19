@@ -1,0 +1,3 @@
+# One Netlify site name per line. Lines starting with # are ignored.
+my-landing
+my-dashboard

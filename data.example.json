@@ -1,0 +1,17 @@
+[
+  {
+    "id": "00000000-0000-0000-0000-000000000000",
+    "name": "my-landing",
+    "url": "https://my-landing.netlify.app",
+    "custom_domain": null,
+    "domain_aliases": [],
+    "default_domain": "my-landing.netlify.app",
+    "build_settings": {
+      "repo_path": "my-github-user/my-landing",
+      "repo_branch": "main",
+      "cmd": "npm run build",
+      "dir": "dist",
+      "base": null
+    }
+  }
+]
