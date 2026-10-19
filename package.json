@@ -1,7 +1,7 @@
 {
   "name": "netlify-to-cloudflare-migrator",
   "version": "1.0.0",
-  "description": "Script para migrar configuraciones de Netlify a Cloudflare Pages",
+  "description": "CLI to migrate Netlify sites to Cloudflare Pages or Render through their APIs",
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
@@ -28,5 +28,10 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JeremyAyza/netlify-to-cloudflare-migrator.git"
   }
 }
